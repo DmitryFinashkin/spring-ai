@@ -1,0 +1,103 @@
+QUERY 1 — Expected: LOCAL
+Check this Java code for syntax errors.
+
+public int sum(int a, int b) {
+    return a + b
+}
+
+---
+
+QUERY 2 — Expected: LOCAL
+Is this variable name appropriate for a list of user emails?
+
+List<String> x = new ArrayList<>();
+x.add("user@example.com");
+
+---
+
+QUERY 3 — Expected: CLOUD (contains "security")
+Review the security implications of this authentication flow.
+
+public boolean login(String username, String password) {
+    String storedPassword = userRepository.findByUsername(username).getPassword();
+    return password.equals(storedPassword);
+}
+
+---
+
+QUERY 4 — Expected: LOCAL
+Does this method handle null correctly?
+
+public String greet(User user) {
+    return "Hello, " + user.getName();
+}
+
+---
+
+QUERY 5 — Expected: LOCAL
+Quick check — is this loop correct?
+
+for (int i = 0; i <= list.size(); i++) {
+    System.out.println(list.get(i));
+}
+
+---
+
+QUERY 6 — Expected: CLOUD (contains "architecture" and "scalability")
+Is this architecture scalable? I'm concerned about scalability under high load.
+
+@Service
+public class OrderService {
+    @Autowired
+    private OrderRepository repo;
+
+    public List<Order> getAllOrdersForUser(Long userId) {
+        return repo.findAll().stream()
+            .filter(o -> o.getUserId().equals(userId))
+            .collect(Collectors.toList());
+    }
+}
+
+---
+
+QUERY 7 — Expected: LOCAL
+Are these equality checks correct?
+
+if (status == "ACTIVE") {
+    process();
+}
+
+---
+
+QUERY 8 — Expected: LOCAL
+Is this exception handling reasonable?
+
+try {
+    saveData();
+} catch (Exception e) {
+    e.printStackTrace();
+}
+
+---
+
+QUERY 9 — Expected: CLOUD (contains "compare" and "tradeoff")
+Compare this approach to using a builder pattern. What are the tradeoffs?
+
+public class HttpRequest {
+    public HttpRequest(String url, String method, Map<String, String> headers,
+                       String body, int timeout, boolean followRedirects,
+                       int retries) {
+        // 7-parameter constructor
+    }
+}
+
+---
+
+QUERY 10 — Expected: LOCAL
+Does this method name describe what it does?
+
+public List<String> doStuff(List<Integer> items) {
+    return items.stream()
+        .map(String::valueOf)
+        .collect(Collectors.toList());
+}

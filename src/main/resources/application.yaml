@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: spring-ai
+  ai:
+    anthropic:
+      api-key: ${LM_STUDIO_API_KEY}
+      base-url: http://127.0.0.1:1234
+      chat:
+        options:
+          model: google/gemma-4-e2b
+          max-tokens: 4096
+      memory:
+        repository:
+          jdbc:
+            initialize-schema: always
+  datasource:
+    url: jdbc:postgresql://localhost:5432/springai
+    username: springai
+    password: springai
+
+app:
+  cloud:
+    api-key: ${ANTHROPIC_API_KEY}
+    model: claude-opus-4-7
+    max-tokens: 4096
+  routing:
+    cost:
+      local:
+        input-per-million-usd: 0.00
+        output-per-million-usd: 0.00
+      cloud:
+        input-per-million-usd: 15.00
+        output-per-million-usd: 75.00

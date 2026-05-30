@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multi-Model Cost Dashboard</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --panel: #141414;
+            --border: #262626;
+            --text: #f5f5f5;
+            --muted: #888;
+            --local: #6ee7b7;
+            --local-bg: #1a4d2e;
+            --cloud: #fca5a5;
+            --cloud-bg: #4d1a1a;
+            --accent: #fde68a;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 32px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        button {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 16px;
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover { color: var(--text); border-color: var(--text); }
+        .total-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .total-label {
+            color: var(--muted);
+            font-size: 14px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .total-value {
+            font-size: 72px;
+            font-weight: 700;
+            margin-top: 8px;
+            color: var(--accent);
+        }
+        .tiers {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .tier {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .tier.local { border-left: 4px solid var(--local); }
+        .tier.cloud { border-left: 4px solid var(--cloud); }
+        .tier h2 {
+            margin: 0 0 16px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .tier.local h2 { color: var(--local); }
+        .tier.cloud h2 { color: var(--cloud); }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+            font-size: 15px;
+        }
+        .row:last-child { border-bottom: none; }
+        .row .label { color: var(--muted); }
+        .row .value { font-weight: 600; }
+        .decisions {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+        }
+        .decisions h2 {
+            margin: 0 0 16px;
+            font-size: 14px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            font-weight: 500;
+            color: var(--muted);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        td.excerpt { color: var(--text); max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        td.rule { color: var(--muted); }
+        td.tokens { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .badge.local { background: var(--local-bg); color: var(--local); }
+        .badge.cloud { background: var(--cloud-bg); color: var(--cloud); }
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 32px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Multi-Model Cost Dashboard</h1>
+        <button id="resetBtn">Reset</button>
+    </header>
+
+    <div class="total-card">
+        <div class="total-label">Total Cost</div>
+        <div class="total-value" id="totalCost">$0.000000</div>
+    </div>
+
+    <div class="tiers">
+        <div class="tier local">
+            <h2>LOCAL</h2>
+            <div class="row"><span class="label">Requests</span><span class="value" id="localRequests">0</span></div>
+            <div class="row"><span class="label">Input tokens</span><span class="value" id="localInputTokens">0</span></div>
+            <div class="row"><span class="label">Output tokens</span><span class="value" id="localOutputTokens">0</span></div>
+            <div class="row"><span class="label">Cost</span><span class="value" id="localCost">$0.000000</span></div>
+        </div>
+        <div class="tier cloud">
+            <h2>CLOUD</h2>
+            <div class="row"><span class="label">Requests</span><span class="value" id="cloudRequests">0</span></div>
+            <div class="row"><span class="label">Input tokens</span><span class="value" id="cloudInputTokens">0</span></div>
+            <div class="row"><span class="label">Output tokens</span><span class="value" id="cloudOutputTokens">0</span></div>
+            <div class="row"><span class="label">Cost</span><span class="value" id="cloudCost">$0.000000</span></div>
+        </div>
+    </div>
+
+    <div class="decisions">
+        <h2>Recent Decisions</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 90px">Time</th>
+                    <th>Prompt</th>
+                    <th style="width: 90px">Tier</th>
+                    <th style="width: 180px">Rule</th>
+                    <th style="width: 70px; text-align: right">In</th>
+                    <th style="width: 70px; text-align: right">Out</th>
+                    <th style="width: 100px; text-align: right">Cost</th>
+                </tr>
+            </thead>
+            <tbody id="decisionsBody">
+                <tr><td colspan="7" class="empty">No requests yet</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // When opened via Spring Boot (localhost:8080) use relative URLs (same-origin).
+        // When opened via IntelliJ's preview server (localhost:63342) or file://, target :8080 directly.
+        const API_BASE = (location.protocol === 'http:' && location.port === '8080')
+                ? ''
+                : 'http://localhost:8080';
+
+        const fmt = (n) => '$' + Number(n).toFixed(6);
+        const fmtInt = (n) => Number(n).toLocaleString('en-US');
+        const fmtTime = (iso) => {
+            try {
+                return new Date(iso).toTimeString().slice(0, 8);
+            } catch { return ''; }
+        };
+
+        function setText(id, value) {
+            document.getElementById(id).textContent = value;
+        }
+
+        function renderDecisions(decisions) {
+            const body = document.getElementById('decisionsBody');
+            while (body.firstChild) body.removeChild(body.firstChild);
+
+            if (!decisions || decisions.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 7;
+                td.className = 'empty';
+                td.textContent = 'No requests yet';
+                tr.appendChild(td);
+                body.appendChild(tr);
+                return;
+            }
+
+            for (const d of decisions) {
+                const tr = document.createElement('tr');
+
+                const tdTime = document.createElement('td');
+                tdTime.textContent = fmtTime(d.timestamp);
+                tr.appendChild(tdTime);
+
+                const tdExcerpt = document.createElement('td');
+                tdExcerpt.className = 'excerpt';
+                tdExcerpt.textContent = d.excerpt || '';
+                tr.appendChild(tdExcerpt);
+
+                const tdTier = document.createElement('td');
+                const badge = document.createElement('span');
+                const tier = String(d.tier || '');
+                badge.className = 'badge ' + tier.toLowerCase();
+                badge.textContent = tier;
+                tdTier.appendChild(badge);
+                tr.appendChild(tdTier);
+
+                const tdRule = document.createElement('td');
+                tdRule.className = 'rule';
+                tdRule.textContent = d.rule || '';
+                tr.appendChild(tdRule);
+
+                const tdIn = document.createElement('td');
+                tdIn.className = 'tokens';
+                tdIn.textContent = fmtInt(d.inputTokens || 0);
+                tr.appendChild(tdIn);
+
+                const tdOut = document.createElement('td');
+                tdOut.className = 'tokens';
+                tdOut.textContent = fmtInt(d.outputTokens || 0);
+                tr.appendChild(tdOut);
+
+                const tdCost = document.createElement('td');
+                tdCost.className = 'tokens';
+                tdCost.textContent = fmt(d.costUsd || 0);
+                tr.appendChild(tdCost);
+
+                body.appendChild(tr);
+            }
+        }
+
+        async function poll() {
+            let data;
+            try {
+                const res = await fetch(API_BASE + '/ai/costs');
+                if (!res.ok) return;
+                data = await res.json();
+            } catch { return; }
+
+            setText('totalCost', fmt(data.totalCostUsd));
+
+            const tiers = data.tiers || {};
+            const local = tiers.LOCAL || { requests: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 };
+            const cloud = tiers.CLOUD || { requests: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 };
+
+            setText('localRequests', fmtInt(local.requests));
+            setText('localInputTokens', fmtInt(local.inputTokens));
+            setText('localOutputTokens', fmtInt(local.outputTokens));
+            setText('localCost', fmt(local.costUsd));
+
+            setText('cloudRequests', fmtInt(cloud.requests));
+            setText('cloudInputTokens', fmtInt(cloud.inputTokens));
+            setText('cloudOutputTokens', fmtInt(cloud.outputTokens));
+            setText('cloudCost', fmt(cloud.costUsd));
+
+            renderDecisions(data.recent);
+        }
+
+        document.getElementById('resetBtn').addEventListener('click', async () => {
+            await fetch(API_BASE + '/ai/costs/reset', { method: 'POST' });
+            poll();
+        });
+
+        poll();
+        setInterval(poll, 1000);
+    </script>
+</body>
+</html>
